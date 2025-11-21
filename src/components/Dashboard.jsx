@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Card, MoodPicker, ToggleThemeFont, MetricToggle } from './UI'
 import Calendar from './Calendar'
 import DoodleCanvas from './DoodleCanvas'
+import Insights from './Insights'
 
 const API = import.meta.env.VITE_BACKEND_URL
 
@@ -24,7 +25,17 @@ export default function Dashboard(){
   const affirmation = useAffirmation(email)
 
   useEffect(()=>{
-    // minimal: fetch entries + todos for month
+    const saved = localStorage.getItem('journal.email')
+    if(saved) setEmail(saved)
+    // load profile if exists
+    const em = saved || 'demo@muse.app'
+    fetch(`${API}/api/users?email=${encodeURIComponent(em)}`).then(r=>r.json()).then(d=>{
+      if(d.user){ setProfile(d.user) }
+    }).catch(()=>{})
+  },[])
+
+  useEffect(()=>{
+    // fetch entries + todos for month
     const start = new Date(year, month, 1).toISOString().slice(0,10)
     const end = new Date(year, month+1, 0).toISOString().slice(0,10)
     Promise.all([
@@ -45,7 +56,7 @@ export default function Dashboard(){
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-white/90">Welcome back, {profile.name}</h2>
+          <h2 className="text-2xl font-semibold text-white/90">Welcome back, {profile.name||'Muse User'}</h2>
           <p className="text-white/60">{affirmation}</p>
         </div>
         <ToggleThemeFont />
@@ -77,6 +88,8 @@ export default function Dashboard(){
           </div>
         </Card>
       </div>
+
+      <Insights />
     </div>
   )
 }
